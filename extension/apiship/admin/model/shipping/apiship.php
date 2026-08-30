@@ -60,10 +60,11 @@ class Apiship extends \Opencart\System\Engine\Model {
 		// хотя файлы на месте и установщик показывает его «установленным».
 		$this->db->query("INSERT IGNORE INTO `" . DB_PREFIX . "extension` (`extension`, `type`, `code`) VALUES ('apiship', 'shipping', 'apiship')");
 
-		// Восстановление настроек модуля, если их удалила переустановка
-		// (значения — текущие боевые настройки магазина).
+		// Восстановление настроек модуля, если их удалила переустановка.
+		// ВАЖНО: значения токена, адреса отправки и контактов здесь НЕ задаются —
+		// они вводятся в админ-панели (Расширения → Доставка → ApiShip).
 		$apiship_settings = [
-			['shipping_apiship_token', '072a2c835e2c33d30bdb062c5882dee3', 0],
+			['shipping_apiship_token', '', 0],
 			['shipping_apiship_title', 'Доставка', 0],
 			['shipping_apiship_status', '1', 0],
 			['shipping_apiship_rub_select', 'RUB', 0],
@@ -77,17 +78,17 @@ class Apiship extends \Opencart\System\Engine\Model {
 			['shipping_apiship_description_door_template', '', 0],
 			['shipping_apiship_icon_show', '1', 0],
 			['shipping_apiship_sending_country_code', 'RU', 0],
-			['shipping_apiship_sending_region', 'Республика Марий Эл', 0],
-			['shipping_apiship_sending_city', 'Йошкар-Ола', 0],
-			['shipping_apiship_sending_street', 'Красноармейская', 0],
-			['shipping_apiship_sending_house', '8б', 0],
-			['shipping_apiship_sending_block', '10', 0],
+			['shipping_apiship_sending_region', '', 0],
+			['shipping_apiship_sending_city', '', 0],
+			['shipping_apiship_sending_street', '', 0],
+			['shipping_apiship_sending_house', '', 0],
+			['shipping_apiship_sending_block', '', 0],
 			['shipping_apiship_sending_office', '', 0],
-			['shipping_apiship_contact_organization', 'ИП Михеев Дмитрий Александрович', 0],
-			['shipping_apiship_contact_inn', '121514873931', 0],
-			['shipping_apiship_contact_name', 'Михеев Дмитрий Александрович', 0],
-			['shipping_apiship_contact_phone', '+79877289295', 0],
-			['shipping_apiship_contact_email', 'dmt.dmt@yandex.ru', 0],
+			['shipping_apiship_contact_organization', '', 0],
+			['shipping_apiship_contact_inn', '', 0],
+			['shipping_apiship_contact_name', '', 0],
+			['shipping_apiship_contact_phone', '', 0],
+			['shipping_apiship_contact_email', '', 0],
 			['shipping_apiship_parcel_length', '20', 0],
 			['shipping_apiship_parcel_width', '20', 0],
 			['shipping_apiship_parcel_height', '50', 0],
@@ -110,8 +111,8 @@ class Apiship extends \Opencart\System\Engine\Model {
 			['shipping_apiship_group_export_status_ready', '1', 0],
 			['shipping_apiship_group_export_status_ok', '3', 0],
 			['shipping_apiship_group_export_status_error', '7', 0],
-			['shipping_apiship_cron_key', 'zxjxUWjQEF', 0],
-			['shipping_apiship_yandex_api_key', 'c71f81fd-66de-4097-890e-4c28acfa4a4c', 0],
+			['shipping_apiship_cron_key', '', 0],
+			['shipping_apiship_yandex_api_key', '', 0],
 			['shipping_apiship_sort_order', '', 0],
 			['shipping_apiship_mode', 'shipping_apiship_mode_normal', 0],
 			['shipping_apiship_provider', '{"cdek":{"pickup_type":"1","id":"2295286"}}', 1],
