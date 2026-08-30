@@ -1,0 +1,9 @@
+{
+  "name": "ApiShip shipping for OpenCart 4.1",
+  "description": "ApiShip shipping integration adapted for OpenCart 4.1.0.3.",
+  "code": "apiship",
+  "version": "1.2.4.1.0.3",
+  "author": "ApiShip / OpenCart 4.1 adaptation",
+  "link": "https://apiship.ru",
+  "type": "shipping"
+}

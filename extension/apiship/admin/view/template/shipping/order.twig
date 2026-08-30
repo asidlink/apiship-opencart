@@ -1,0 +1,231 @@
+<div class="card mb-3">
+  <div class="card-header"><i class="fa-solid fa-truck"></i> {{ text_apiship }}</div>
+  <div class="card-body">
+    <div id="shipping_apiship_crate_note" class="alert alert-warning mb-3" style="display:none;">
+      <i class="fa-solid fa-triangle-exclamation"></i> {{ entry_shipping_apiship_crate_note }}
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_pickup_type }}</label>
+          <select id="shipping_apiship_pickup_type" class="form-select">
+            <option value="1">{{ entry_shipping_apiship_pickup_type1 }}</option>
+            <option value="2">{{ entry_shipping_apiship_pickup_type2 }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_place_dimensions }}</label>
+          <div class="d-flex gap-2">
+            <input type="number" id="shipping_apiship_place_length" class="form-control">
+            <input type="number" id="shipping_apiship_place_width" class="form-control">
+            <input type="number" id="shipping_apiship_place_height" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_place_weight }}</label>
+          <input type="number" id="shipping_apiship_place_weight" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_shipping_date }}</label>
+          <input type="date" id="shipping_apiship_shipping_date" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_recipient_phone }}</label>
+          <input type="text" id="shipping_apiship_recipient_phone" class="form-control" value="{{ shipping_apiship_recipient_phone }}" placeholder="+7 ..."/>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_comment }}</label>
+          <textarea rows="4" id="shipping_apiship_comment" class="form-control"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_order_status }}</label>
+          <div id="shipping_apiship_order_status">{{ entry_shipping_apiship_order_status_not_export }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ entry_shipping_apiship_tracking_url }}</label>
+          <div id="shipping_apiship_tracking_url">{{ entry_shipping_apiship_tracking_url_not_found }}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">{{ entry_shipping_apiship_control }}</label>
+        <div id="shipping_apiship_control_span" class="d-grid gap-2" style="display:none!important;">
+          <button type="button" id="shipping_apiship_export" class="btn btn-success"><i class="fa-solid fa-truck"></i> {{ entry_shipping_apiship_export_title }}</button>
+          <button type="button" id="shipping_apiship_export_cancel" class="btn btn-danger" style="display:none;"><i class="fa-solid fa-truck"></i> {{ entry_shipping_apiship_cancel_export_title }}</button>
+          <button type="button" id="shipping_apiship_label" class="btn btn-info" style="display:none;"><i class="fa-solid fa-tags"></i> {{ entry_shipping_apiship_label_title }}</button>
+          <button type="button" id="shipping_apiship_waybill" class="btn btn-info" style="display:none;"><i class="fa-solid fa-truck"></i> {{ entry_shipping_apiship_waybill_title }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const exportUrl = {{ shipping_apiship_export_url|json_encode }};
+  const cancelUrl = {{ shipping_apiship_export_cancel_url|json_encode }};
+  const paramsUrl = {{ shipping_apiship_get_order_params_url|json_encode }};
+  const labelUrl = {{ shipping_apiship_label_url|json_encode }};
+  const waybillUrl = {{ shipping_apiship_waybill_url|json_encode }};
+  const orderId = {{ order_id }};
+
+  function alertApi(type, text) {
+    if (!text) return;
+    const cls = type === 'success' ? 'alert-success' : 'alert-danger';
+    $('#content > .container-fluid').first().prepend(
+      '<div class="alert ' + cls + ' alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' +
+      $('<div>').text(text).html() +
+      ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>'
+    );
+  }
+
+  function initApiShip() {
+    $.ajax({
+      url: paramsUrl,
+      dataType: 'json',
+      success: function(json) {
+        $('#shipping_apiship_place_length').val(json.place_length || '');
+        $('#shipping_apiship_place_width').val(json.place_width || '');
+        $('#shipping_apiship_place_height').val(json.place_height || '');
+        $('#shipping_apiship_place_weight').val(json.place_weight || '');
+        $('#shipping_apiship_pickup_type').val(json.pickup_type || 1);
+        $('#shipping_apiship_comment').val(json.comment || '');
+        $('#shipping_apiship_shipping_date').val(json.pickup_date || '');
+
+        $('#shipping_apiship_control_span').css('display', 'grid');
+
+        if (json.order_status) {
+          $('#shipping_apiship_order_status').html(json.order_status);
+        }
+        if (json.tracking_url) {
+          $('#shipping_apiship_tracking_url').empty().append($('<a>', {
+            href: json.tracking_url, text: json.tracking_url, target: '_blank', rel: 'noopener noreferrer'
+          }));
+        }
+
+        updateApiShipButtons(json);
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+      }
+    });
+  }
+
+  // Обновление кнопок вкладки «ApiShip» по данным get_order_params.
+  function updateApiShipButtons(json) {
+    if (json.export === true) {
+      $('#shipping_apiship_export').hide();
+      $('#shipping_apiship_export_cancel').show();
+      $('#shipping_apiship_label, #shipping_apiship_waybill').show();
+      if (json.paid) $('#shipping_apiship_export_cancel').text({{ (entry_shipping_apiship_cancel_export_title ~ entry_shipping_apiship_paid)|json_encode }});
+    } else {
+      $('#shipping_apiship_export').show();
+      $('#shipping_apiship_export_cancel').hide();
+      $('#shipping_apiship_label, #shipping_apiship_waybill').hide();
+      if (json.paid) $('#shipping_apiship_export').text({{ (entry_shipping_apiship_export_title ~ entry_shipping_apiship_paid)|json_encode }});
+    }
+
+    // Напоминание: если в заказе есть товары с обрешёткой, услугу в СДЭК нужно
+    // добавить вручную в ЛК СДЭК / ЭК5 (по API она не передаётся).
+    if (json.crate) {
+      $('#shipping_apiship_crate_note').show();
+    } else {
+      $('#shipping_apiship_crate_note').hide();
+    }
+  }
+
+  // Синхронизация кнопок после создания заказа в ApiShip. Если ответ на
+  // экспорт не дошёл до браузера, а заказ в СДЭК уже создан — кнопка
+  // «Создание заказа в ApiShip» всё равно исчезнет.
+  function syncApiShipButtons() {
+    $.ajax({
+      url: paramsUrl,
+      dataType: 'json',
+      success: function(json) {
+        updateApiShipButtons(json);
+        $('#shipping_apiship_export').prop('disabled', false);
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        $('#shipping_apiship_export').show().prop('disabled', false);
+      }
+    });
+  }
+
+  $('#shipping_apiship_export').on('click', function() {
+    var $element = $(this);
+
+    // Блокируем кнопку сразу: повторный клик создал бы дубль заказа в СДЭК.
+    $element.prop('disabled', true);
+
+    $.ajax({
+      url: exportUrl,
+      dataType: 'json',
+      data: {
+        shipping_apiship_pickup_type: $('#shipping_apiship_pickup_type').val(),
+        shipping_apiship_place_length: $('#shipping_apiship_place_length').val(),
+        shipping_apiship_place_width: $('#shipping_apiship_place_width').val(),
+        shipping_apiship_place_height: $('#shipping_apiship_place_height').val(),
+        shipping_apiship_place_weight: $('#shipping_apiship_place_weight').val(),
+        shipping_apiship_comment: $('#shipping_apiship_comment').val(),
+        shipping_apiship_pickup_date: $('#shipping_apiship_shipping_date').val(),
+        shipping_apiship_recipient_phone: $('#shipping_apiship_recipient_phone').val()
+      },
+      success: function(json) {
+        alertApi(json.error ? 'error' : 'success', json.error || json.success);
+        initApiShip();
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        alertApi('error', {{ error_shipping_apiship_export_network|json_encode }});
+      },
+      complete: function() {
+        // Обновляем состояние кнопок по фактическим данным ApiShip.
+        syncApiShipButtons();
+      }
+    });
+  });
+
+  $('#shipping_apiship_export_cancel').on('click', function() {
+    if (!confirm({{ entry_shipping_apiship_cancel_confirm|json_encode }})) return;
+    $.ajax({
+      url: cancelUrl,
+      dataType: 'json',
+      success: function(json) {
+        alertApi(json.error ? 'error' : 'success', json.error || json.success);
+        initApiShip();
+      }
+    });
+  });
+
+  function getDocument(type) {
+    $.ajax({
+      url: type === 'label' ? labelUrl : waybillUrl,
+      type: 'POST',
+      dataType: 'json',
+      data: {id: orderId},
+      success: function(json) {
+        if (json.error) alertApi('error', json.error);
+        const items = json[type === 'label' ? 'labels' : 'waybills'] || [];
+        if (items.length) {
+          const links = items.map(function(item) {
+            return '<a target="_blank" rel="noopener noreferrer" href="' + $('<div>').text(item.url).html() + '">' +
+              $('<div>').text(item.name).html() + '</a>';
+          }).join(', ');
+          $('#content > .container-fluid').first().prepend(
+            '<div class="alert alert-success alert-dismissible">' +
+            $('<div>').text({{ (entry_shipping_apiship_label_title)|json_encode }}).html() + ': ' + links +
+            ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>'
+          );
+        }
+      }
+    });
+  }
+
+  $('#shipping_apiship_label').on('click', function() { getDocument('label'); });
+  $('#shipping_apiship_waybill').on('click', function() { getDocument('waybills'); });
+
+  initApiShip();
+})();
+</script>
